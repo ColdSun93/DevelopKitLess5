@@ -1,16 +1,17 @@
 import java.util.concurrent.CountDownLatch;
 
 public class Thinker extends Thread {
+    private int num;
     private String name;
-    private boolean satiety = false;
+    private boolean satiety = false; //сытость философа
     private CountDownLatch cdl;
-    private volatile UsingForks fork1, fork2;
+    private UsingForks fork;
 
-    public Thinker (String name, CountDownLatch cdl,  UsingForks fork1, UsingForks fork2){
+    public Thinker (int num, String name, CountDownLatch cdl, UsingForks fork){
+        this.num = num;
         this.name = name;
         this.cdl = cdl;
-        this.fork1 = fork1;
-        this.fork2 = fork2;
+        this.fork = fork;
     }
 
     @Override
@@ -28,18 +29,35 @@ public class Thinker extends Thread {
     }
 
     private void takeTwoForks() throws InterruptedException{
+
+        System.out.println(name + " размышляет");
+        sleep(1000);
+
         while (!satiety) {
-            if (!fork1.getForks() && !fork2.getForks()) {
+            if (num-1 < fork.getSizeForks()-1){
+                if (!fork.getForks(num-1) && !fork.getForks(num)){
+                    fork.setForks(num);
+                    fork.setForks(num-1);
+                    System.out.println(name + " ест");
+                    sleep(1000);
+                    cdl.countDown();
+                    satiety = true;
+                } else {
+                    System.out.println(name + " размышляет");
+                    sleep(1000);
+                }
+            } else {
+                //if (!fork.getForks(num-1) && !fork.getForks(0)){
+                fork.setForks(num-1);
+                fork.setForks(0);
                 System.out.println(name + " ест");
                 sleep(1000);
-                fork1.setForks(true);
-                fork2.setForks(true);
                 cdl.countDown();
                 satiety = true;
-            } else{
-                System.out.println(name + " размышляет");
-                sleep(1000);
 
+//            } else {
+//                System.out.println(name + " размышляет");
+//                sleep(1000);
             }
             try {
                 sleep(1000);
@@ -50,7 +68,16 @@ public class Thinker extends Thread {
     }
 
     private void finishedEating() throws InterruptedException{
-        System.out.println(name + " наелся");
+        if (num-1 < fork.getSizeForks()-1){
+            fork.setForks(num);
+            fork.setForks(num-1);
+        } else {
+            fork.setForks(num-1);
+            fork.setForks(0);
+        }
+
+        System.out.println(name + " наелся и размышляет");
+        sleep(1000);
     }
 
     public void eat(){
